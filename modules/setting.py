@@ -1,7 +1,8 @@
 
 # www.basketball-reference.com
 class ScrapperSetting:
-    TEAMS = {}
+    TEAMS = {'philadelphia 76ers': 'PHI',
+             'houston rockets': 'HOU'}
     STATS = {'player': 'starters', 'mp': 'minutes', 'fg': 'field_goal', 'fga': 'field_goal_attempts', 'fg3': '3p_made',
              'fg3a': '3p_attempts', 'ft': 'free_throw_made', 'fta': 'free_throw_attempts', 'orb': 'offensive_rebounds',
              'drb': 'defensive_rebounds', 'trb': 'total_rebounds',
