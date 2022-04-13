@@ -7,19 +7,22 @@ from .setting import ScrapperSetting
 
 class GameScrapper:
 
-    def __init__(self, link):
+    def __init__(self, link, season):
         self.setting = ScrapperSetting()
         self.link = link
+        self.season_stage = None
+        self.season = season
         self.time = None
         self.arena = None
         self.away = None
         self.home = None
+        self.score = None
 
     def main(self):
         soup = self.get_soup()
         self.parse_data(soup)
         self.save_data_to_csv()
-        print(1)
+        print(f'Game {self.away.name} - {self.home.name} was parsed. Season {self.season}, {self.time}')
 
     def get_soup(self):
         response = requests.get(self.link)
@@ -30,8 +33,14 @@ class GameScrapper:
         self.parse_game_table(soup)
 
     def parse_info_about_game(self, soup):
+        self.parse_h(soup)
         self.parse_date(soup)
         self.parse_teams(soup)
+
+    def parse_h(self, soup):
+        h1 = soup.find('h1')
+        stage = h1.text.split(':')
+        self.season_stage = 'Regular Season' if len(stage) == 1 else " ".join(stage[0].split(' ')[-4:-2])
 
     def parse_date(self, soup):
         score_meta = soup.find('div', class_='scorebox_meta')
@@ -40,19 +49,18 @@ class GameScrapper:
         self.arena = score_box_rows[1].text
 
     def parse_teams(self, soup):
-        team_names = []
-        records = []
-        scores = []
-
         score_box = soup.find_all('div', class_='scores')
-        for box in score_box:
-            records.append(box.nextSibling.text)
-            scores.append(box.text.replace('\n', ''))
-            name = self.setting.TEAMS[box.parent.find('strong').text.lower().replace('\n', '')]
-            team_names.append(name)
-        score = str(scores[0]) + '-' + str(scores[1])
-        self.away = Game(team_names[0], records[0], self.time, self.arena, False, team_names[1], score)
-        self.home = Game(team_names[1], records[1], self.time, self.arena, True, team_names[0], score)
+        self.away = Team(score_box[0], False)
+        self.home = Team(score_box[1], True)
+
+        for team in [self.away, self.home]:
+            team.record = team.info_box.nextSibling.text
+            team.score = team.info_box.text.replace('\n', '')
+            team.name = self.setting.TEAMS[team.info_box.parent.find('strong').text.lower().replace('\n', '')]
+
+        self.score = str(self.away.score) + '-' + str(self.home.score)
+        self.away.opponent = self.home.name
+        self.home.opponent = self.away.name
 
     def parse_game_table(self, soup):
         for team_object in [self.away, self.home]:
@@ -91,11 +99,17 @@ class GameScrapper:
                 fields.update({value: {}})
             else:
                 fields[td_list[0].text].update({stat_name: value})
+
+            if stat_name == 'starters':
+                if link := self.parser_player_id(td):
+                    new_name = link + '_' + td_list[0].text.replace(' ', '_')
+                    fields[new_name] = fields.pop(td_list[0].text)
+                    td_list[0].string = new_name
         return fields
 
     @staticmethod
     def get_stats(fields, td_list):
-        if len(fields[td_list[0].text]) > 0:
+        if 'reason' not in fields[td_list[0].text]:
             field_goal_miss = int(
                 int(fields[td_list[0].text]['field_goal_attempts']) - int(fields[td_list[0].text]['field_goal']))
             fields[td_list[0].text].update({'field_goal_miss': field_goal_miss})
@@ -107,9 +121,14 @@ class GameScrapper:
 
     @staticmethod
     def stat_preprocessing(stat_name, value):
-        if stat_name not in ['starters', 'minutes']:
+        if stat_name not in ['starters', 'minutes', 'reason']:
             value = int(value)
         return value
+
+    @staticmethod
+    def parser_player_id(td):
+        if a := td.find('a'):
+            return a['href'].split('/')[-1].replace('.html', '')
 
     def players_postprocessing(self, players):
         players = self.get_per(players)
@@ -123,7 +142,8 @@ class GameScrapper:
     @staticmethod
     def get_per(fields):
         for i, (key, value) in enumerate(fields.items()):
-            if len(fields[key]) == 0:
+            # Did Not Play or other... row w/o stats
+            if 'reason' in fields[key]:
                 continue
 
             time = value['minutes'].split(':')
@@ -184,35 +204,48 @@ class GameScrapper:
     def save_teams_stats(self):
         self.save_team(self.away)
         self.save_team(self.home)
-        print(1)
 
-    @staticmethod
-    def save_team(team):
+    def save_team(self, team):
         name = 'data/row_data/teams/' + team.name + '_games.csv'
         is_exist = os.path.exists(name)
         data = [str(item) for item in team.stats.values()]
-        data = [team.record, str(team.is_home), team.opponent, team.score, team.time] + data
+        data = [self.season_stage, team.record, str(team.is_home), team.opponent, self.score, self.time] + data
 
         with open(name, 'a') as csvfile:
             writer = csv.writer(csvfile)
             if is_exist is False:
                 header = list(team.stats.keys())
-                header = ['record', 'is_home', 'opponent', 'score', 'time'] + header
+                header = ['season_stage', 'record', 'is_home', 'opponent', 'score', 'time'] + header
                 writer.writerow(header)
             writer.writerow(data)
 
     def save_players_stats(self):
-        pass
+        self.save_players(self.away)
+        self.save_players(self.home)
+
+    def save_players(self, team):
+        for player in team.players:
+            name = 'data/row_data/players/' + player + '.csv'
+            is_exist = os.path.exists(name)
+            data = [str(item) for item in team.players[player].values()]
+            data = [team.name, self.score, team.opponent, str(team.is_home), self.time] + data
+
+            with open(name, 'a') as csvfile:
+                writer = csv.writer(csvfile)
+                if is_exist is False:
+                    header = list(team.players[player].keys())
+                    header = ['team', 'score', 'opponent', 'is_home', 'time'] + header
+                    writer.writerow(header)
+                writer.writerow(data)
 
 
-class Game:
-    def __init__(self, name, record, time, arena, is_home, opponent, score):
-        self.name = name
-        self.record = record
-        self.time = time
-        self.arena = arena
+class Team:
+    def __init__(self, info_box, is_home):
+        self.info_box = info_box
+        self.name = None
+        self.record = None
         self.is_home = is_home
-        self.opponent = opponent
-        self.score = score
+        self.opponent = None
+        self.score = None
         self.players = None
         self.stats = None

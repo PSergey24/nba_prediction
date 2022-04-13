@@ -1,9 +1,20 @@
 
 # www.basketball-reference.com
 class ScrapperSetting:
-    TEAMS = {'philadelphia 76ers': 'PHI',
-             'houston rockets': 'HOU'}
-    STATS = {'player': 'starters', 'mp': 'minutes', 'fg': 'field_goal', 'fga': 'field_goal_attempts', 'fg3': '3p_made',
+    TEAMS = {'brooklyn nets': 'BRK',
+             'charlotte hornets': 'CHO',
+             'chicago bulls': 'CHI',
+             'detroit pistons': 'DET',
+             'houston rockets': 'HOU',
+             'indiana pacers': 'IND',
+             'los angeles lakers': 'LAL',
+             'los angeles clippers': 'LAC',
+             'miami heat': 'MIA',
+             'new orleans pelicans': 'NOP',
+             'philadelphia 76ers': 'PHI',
+             'toronto raptors': 'TOR'
+             }
+    STATS = {'player': 'starters', 'reason': 'reason', 'mp': 'minutes', 'fg': 'field_goal', 'fga': 'field_goal_attempts', 'fg3': '3p_made',
              'fg3a': '3p_attempts', 'ft': 'free_throw_made', 'fta': 'free_throw_attempts', 'orb': 'offensive_rebounds',
              'drb': 'defensive_rebounds', 'trb': 'total_rebounds',
              'ast': 'ast', 'stl': 'stl', 'blk': 'blk', 'tov': 'turnovers', 'pf': 'personal_fouls', 'pts': 'points'
