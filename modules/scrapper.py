@@ -30,7 +30,7 @@ class DataScrapper:
 
     def get_seasons(self):
         if len(self.state.seasons) == 0:
-            self.seasons = ['https://www.basketball-reference.com/leagues/NBA_' + str(year) + '_games.html' for year in range(2020, 2023, 1)]
+            self.seasons = ['https://www.basketball-reference.com/leagues/NBA_' + str(year) + '_games.html' for year in range(2000, 2023, 1)]
             self.state.seasons = self.seasons
             self.state.current_season = 0
         else:
@@ -54,6 +54,7 @@ class DataScrapper:
 
     def test(self):
         url = 'https://www.basketball-reference.com/leagues/NBA_2020_games.html'
+        url = 'https://www.basketball-reference.com/leagues/NBA_2000_games.html'
         self.season_scrapper = SeasonScrapper(url, self.state, self.state_name)
         self.season_scrapper.test()
 

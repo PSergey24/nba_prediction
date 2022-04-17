@@ -24,8 +24,10 @@ class SeasonScrapper:
         url = 'https://www.basketball-reference.com/boxscores/202008140HOU.html'
         url = 'https://www.basketball-reference.com/boxscores/201910220TOR.html'
         url = 'https://www.basketball-reference.com/boxscores/201405080MIA.html'
-
-        self.game_scrapper = GameScrapper(url, '2000')
+        url = 'https://www.basketball-reference.com/boxscores/202008150POR.html'
+        url = 'https://www.basketball-reference.com/boxscores/202008170DEN.html'
+        game = (url, ['UTA', 'DEN'])
+        self.game_scrapper = GameScrapper(game, '2000')
         self.game_scrapper.main()
         print(1)
 
@@ -62,7 +64,13 @@ class SeasonScrapper:
                 games = soup_month.find_all("td", {"data-stat": "box_score_text"})
                 for game in games:
                     game_link = game.find('a')
-                    self.games.append('https://www.basketball-reference.com' + game_link['href'])
+                    if game_link is None:
+                        continue
+
+                    parent = game_link.parent.parent
+                    visitor = parent.find("td", {"data-stat": "visitor_team_name"}).find("a")["href"].split("/")[-2]
+                    home = parent.find("td", {"data-stat": "home_team_name"}).find("a")["href"].split("/")[-2]
+                    self.games.append(('https://www.basketball-reference.com' + game_link['href'], [visitor, home]))
 
             self.state.games = self.games
             self.state.current_game = 0
@@ -79,8 +87,8 @@ class SeasonScrapper:
             # update state
             self.state.current_game += 1
             self.save_state()
-            print(f'State was updated')
-            time.sleep(4)
+            # print(f'State was updated')
+            time.sleep(5)
 
     def save_state(self):
         with open(self.state_name, 'wb') as outp:

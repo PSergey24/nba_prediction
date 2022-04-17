@@ -7,13 +7,14 @@ from .setting import ScrapperSetting
 
 class GameScrapper:
 
-    def __init__(self, link, season):
+    def __init__(self, game, season):
         self.setting = ScrapperSetting()
-        self.link = link
+        self.link = game[0]
         self.season_stage = None
         self.season = season
         self.time = None
         self.arena = None
+        self.teams = game[1]
         self.away = None
         self.home = None
         self.score = None
@@ -40,7 +41,12 @@ class GameScrapper:
     def parse_h(self, soup):
         h1 = soup.find('h1')
         stage = h1.text.split(':')
-        self.season_stage = 'Regular Season' if len(stage) == 1 else " ".join(stage[0].split(' ')[-4:-2])
+        if len(stage) == 1:
+            self.season_stage = 'Regular Season'
+        elif stage[0] == 'Play-In Game':
+            self.season_stage = 'Play-In Game'
+        else:
+            self.season_stage = " ".join(stage[0].split(' ')[-4:-2])
 
     def parse_date(self, soup):
         score_meta = soup.find('div', class_='scorebox_meta')
@@ -50,13 +56,13 @@ class GameScrapper:
 
     def parse_teams(self, soup):
         score_box = soup.find_all('div', class_='scores')
-        self.away = Team(score_box[0], False)
-        self.home = Team(score_box[1], True)
+        self.away = Team(score_box[0], self.teams[0], False)
+        self.home = Team(score_box[1], self.teams[1], True)
 
         for team in [self.away, self.home]:
             team.record = team.info_box.nextSibling.text
             team.score = team.info_box.text.replace('\n', '')
-            team.name = self.setting.TEAMS[team.info_box.parent.find('strong').text.lower().replace('\n', '')]
+            # team.name = self.setting.TEAMS[team.info_box.parent.find('strong').text.lower().replace('\n', '')]
 
         self.score = str(self.away.score) + '-' + str(self.home.score)
         self.away.opponent = self.home.name
@@ -110,19 +116,25 @@ class GameScrapper:
     @staticmethod
     def get_stats(fields, td_list):
         if 'reason' not in fields[td_list[0].text]:
-            field_goal_miss = int(
-                int(fields[td_list[0].text]['field_goal_attempts']) - int(fields[td_list[0].text]['field_goal']))
+            if fields[td_list[0].text]['field_goal_attempts'] != '' and fields[td_list[0].text]['field_goal'] != '':
+                field_goal_miss = int(
+                    int(fields[td_list[0].text]['field_goal_attempts']) - int(fields[td_list[0].text]['field_goal']))
+            else:
+                field_goal_miss = ''
             fields[td_list[0].text].update({'field_goal_miss': field_goal_miss})
 
-            free_throw_miss = int(
-                int(fields[td_list[0].text]['free_throw_attempts']) - int(fields[td_list[0].text]['free_throw_made']))
+            if fields[td_list[0].text]['free_throw_attempts'] != '' and fields[td_list[0].text]['free_throw_made'] != '':
+                free_throw_miss = int(
+                    int(fields[td_list[0].text]['free_throw_attempts']) - int(fields[td_list[0].text]['free_throw_made']))
+            else:
+                free_throw_miss = ''
             fields[td_list[0].text].update({'free_throw_miss': free_throw_miss})
         return fields
 
     @staticmethod
     def stat_preprocessing(stat_name, value):
         if stat_name not in ['starters', 'minutes', 'reason']:
-            value = int(value)
+            value = int(value) if value != '' else value
         return value
 
     @staticmethod
@@ -155,7 +167,11 @@ class GameScrapper:
                   value['free_throw_made'] * 46.845 + value['blk'] * 39.190 + value['offensive_rebounds'] * 39.190 + \
                   value['ast'] * 34.677 + value['defensive_rebounds'] * 14.707 - value['personal_fouls'] * 17.174 - \
                   value['free_throw_miss'] * 20.091 - value['field_goal_miss'] * 39.190 - value['turnovers'] * 53.897
-            PER *= (1 / value_time)
+
+            if value_time == 0:
+                PER = 0
+            else:
+                PER *= (1 / value_time)
 
             fields[key].update({'PER': round(PER, 3)})
         return fields
@@ -209,13 +225,13 @@ class GameScrapper:
         name = 'data/row_data/teams/' + team.name + '_games.csv'
         is_exist = os.path.exists(name)
         data = [str(item) for item in team.stats.values()]
-        data = [self.season_stage, team.record, str(team.is_home), team.opponent, self.score, self.time] + data
+        data = [self.season, self.season_stage, team.record, str(team.is_home), team.opponent, self.score, self.time] + data
 
         with open(name, 'a') as csvfile:
             writer = csv.writer(csvfile)
             if is_exist is False:
                 header = list(team.stats.keys())
-                header = ['season_stage', 'record', 'is_home', 'opponent', 'score', 'time'] + header
+                header = ['season', 'season_stage', 'record', 'is_home', 'opponent', 'score', 'time'] + header
                 writer.writerow(header)
             writer.writerow(data)
 
@@ -225,24 +241,28 @@ class GameScrapper:
 
     def save_players(self, team):
         for player in team.players:
+            # player not played
+            if 'reason' in team.players[player]:
+                continue
+
             name = 'data/row_data/players/' + player + '.csv'
             is_exist = os.path.exists(name)
             data = [str(item) for item in team.players[player].values()]
-            data = [team.name, self.score, team.opponent, str(team.is_home), self.time] + data
+            data = [self.season, team.name, self.score, team.opponent, str(team.is_home), self.time] + data
 
             with open(name, 'a') as csvfile:
                 writer = csv.writer(csvfile)
                 if is_exist is False:
                     header = list(team.players[player].keys())
-                    header = ['team', 'score', 'opponent', 'is_home', 'time'] + header
+                    header = ['season', 'team', 'score', 'opponent', 'is_home', 'time'] + header
                     writer.writerow(header)
                 writer.writerow(data)
 
 
 class Team:
-    def __init__(self, info_box, is_home):
+    def __init__(self, info_box, name, is_home):
         self.info_box = info_box
-        self.name = None
+        self.name = name
         self.record = None
         self.is_home = is_home
         self.opponent = None
