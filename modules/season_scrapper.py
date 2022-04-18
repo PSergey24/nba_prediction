@@ -58,25 +58,29 @@ class SeasonScrapper:
             self.month.append('https://www.basketball-reference.com' + month['href'])
 
     def parse_games(self):
-        if len(self.state.games) == 0:
-            for month in self.month:
-                soup_month = self.get_soup(month)
-                games = soup_month.find_all("td", {"data-stat": "box_score_text"})
-                for game in games:
-                    game_link = game.find('a')
-                    if game_link is None:
-                        continue
+        games_list = self.get_games()
+        if len(games_list) > len(self.state.games):
+            if len(self.state.games) == 0:
+                self.state.current_game = 0
+            self.state.games = games_list
+            print(f'Links of games was parsed: season {self.season}, count {len(games_list)}')
+        self.games = self.state.games
 
-                    parent = game_link.parent.parent
-                    visitor = parent.find("td", {"data-stat": "visitor_team_name"}).find("a")["href"].split("/")[-2]
-                    home = parent.find("td", {"data-stat": "home_team_name"}).find("a")["href"].split("/")[-2]
-                    self.games.append(('https://www.basketball-reference.com' + game_link['href'], [visitor, home]))
+    def get_games(self):
+        games_list = []
+        for month in self.month:
+            soup_month = self.get_soup(month)
+            games = soup_month.find_all("td", {"data-stat": "box_score_text"})
+            for game in games:
+                game_link = game.find('a')
+                if game_link is None:
+                    continue
 
-            self.state.games = self.games
-            self.state.current_game = 0
-            print(f'Links of games was parsed: season {self.season}, count {len(self.games)}')
-        else:
-            self.games = self.state.games
+                parent = game_link.parent.parent
+                visitor = parent.find("td", {"data-stat": "visitor_team_name"}).find("a")["href"].split("/")[-2]
+                home = parent.find("td", {"data-stat": "home_team_name"}).find("a")["href"].split("/")[-2]
+                games_list.append(('https://www.basketball-reference.com' + game_link['href'], [visitor, home]))
+        return games_list
 
     def process_games(self):
         for i in range(self.state.current_game, len(self.state.games), 1):
