@@ -3,27 +3,32 @@ import requests
 import os.path
 from bs4 import BeautifulSoup
 from .setting import ScrapperSetting
+from .elo_counter import EloCounter
+from .tools import PickleTools
 
 
 class GameScrapper:
 
-    def __init__(self, game, season):
+    def __init__(self, link, season):
         self.setting = ScrapperSetting()
-        self.link = game[0]
-        self.season_stage = None
+        self.pickle = PickleTools()
+        self.elo_counter = EloCounter()
+
+        self.link = link
         self.season = season
+        self.season_stage = None
         self.time = None
         self.arena = None
-        self.teams = game[1]
-        self.away = None
+        self.visitor = None
         self.home = None
         self.score = None
 
     def main(self):
         soup = self.get_soup()
         self.parse_data(soup)
+        self.update_elo_rating()
         self.save_data_to_csv()
-        print(f'Game {self.away.name} - {self.home.name} was parsed. Season {self.season}, {self.time}')
+        print(f'Game {self.visitor.name} - {self.home.name} was parsed. Season {self.season}, {self.time}')
 
     def get_soup(self):
         response = requests.get(self.link)
@@ -55,22 +60,23 @@ class GameScrapper:
         self.arena = score_box_rows[1].text
 
     def parse_teams(self, soup):
-        score_box = soup.find_all('div', class_='scores')
-        self.away = Team(score_box[0], self.teams[0], False)
-        self.home = Team(score_box[1], self.teams[1], True)
+        score_boxes = soup.find_all('div', class_='scores')
 
-        for team in [self.away, self.home]:
-            team.record = team.info_box.nextSibling.text
-            team.score = team.info_box.text.replace('\n', '')
-            # team.name = self.setting.TEAMS[team.info_box.parent.find('strong').text.lower().replace('\n', '')]
+        teams = []
+        for i, box in enumerate(score_boxes):
+            a = box.parent.find("a", {"itemprop": "name"})
+            short_name = a.attrs['href'].split('/')[-2]
+            is_home = False if i == 0 else True
 
-        self.score = str(self.away.score) + '-' + str(self.home.score)
-        self.away.opponent = self.home.name
-        self.home.opponent = self.away.name
+            teams.append(Team(short_name, box.nextSibling.text, is_home, box.text.replace('\n', '')))
+
+        self.visitor, self.home = teams[0], teams[1]
+        self.visitor.opponent, self.home.opponent = self.home.name, self.visitor.name
+        self.score = str(self.visitor.score) + '-' + str(self.home.score)
 
     def parse_game_table(self, soup):
-        for team_object in [self.away, self.home]:
-            team_object.players = self.parse_players_info(soup, team_object.name)
+        for team_object in [self.visitor, self.home]:
+            # team_object.players = self.parse_players_info(soup, team_object.name)
             team_object.stats = self.parse_team_info(soup, team_object.name)
 
     def parse_players_info(self, soup, team_name):
@@ -213,30 +219,59 @@ class GameScrapper:
             return new_team
         return team
 
+    def update_elo_rating(self):
+        elo_state = self.get_elo_state()
+        visitor_old, home_old = self.get_old_elo_rating(elo_state)
+        self.visitor.elo_rating = self.elo_counter.get_elo(visitor_old, home_old, int(self.visitor.score), int(self.home.score))
+        self.home.elo_rating = self.elo_counter.get_elo(home_old, visitor_old, int(self.home.score), int(self.visitor.score))
+        self.save_new_elo(elo_state)
+
+    def get_elo_state(self):
+        return self.pickle.get_state('data/row_data/elo.pkl')
+
+    def get_old_elo_rating(self, elo_state):
+        if elo_state is not False:
+            visitor_elo = self.get_item_elo_rating(elo_state, self.setting.TEAMS_SHORT_NAME[self.visitor.name])
+            home_elo = self.get_item_elo_rating(elo_state, self.setting.TEAMS_SHORT_NAME[self.home.name])
+        else:
+            visitor_elo, home_elo = 1500, 1500
+        return visitor_elo, home_elo
+
+    @staticmethod
+    def get_item_elo_rating(elo_state, id_team):
+        return elo_state.teams[id_team] if id_team in elo_state.teams else 1500
+
+    def save_new_elo(self, elo_state):
+        if elo_state is False:
+            elo_state = EloRating()
+        elo_state.teams.update({self.setting.TEAMS_SHORT_NAME[self.visitor.name]: self.visitor.elo_rating})
+        elo_state.teams.update({self.setting.TEAMS_SHORT_NAME[self.home.name]: self.home.elo_rating})
+        self.pickle.save_state('data/row_data/elo.pkl', elo_state)
+
     def save_data_to_csv(self):
         self.save_teams_stats()
-        self.save_players_stats()
+        # self.save_players_stats()
 
     def save_teams_stats(self):
-        self.save_team(self.away)
+        self.save_team(self.visitor)
         self.save_team(self.home)
 
     def save_team(self, team):
         name = 'data/row_data/teams/' + team.name + '_games.csv'
         is_exist = os.path.exists(name)
         data = [str(item) for item in team.stats.values()]
-        data = [self.season, self.season_stage, team.record, str(team.is_home), team.opponent, self.score, self.time] + data
+        data = [self.season, self.season_stage, team.record, str(team.is_home), team.opponent, self.score, team.elo_rating, self.time] + data
 
         with open(name, 'a') as csvfile:
             writer = csv.writer(csvfile)
             if is_exist is False:
                 header = list(team.stats.keys())
-                header = ['season', 'season_stage', 'record', 'is_home', 'opponent', 'score', 'time'] + header
+                header = ['season', 'season_stage', 'record', 'is_home', 'opponent', 'score', 'ELO', 'time'] + header
                 writer.writerow(header)
             writer.writerow(data)
 
     def save_players_stats(self):
-        self.save_players(self.away)
+        self.save_players(self.visitor)
         self.save_players(self.home)
 
     def save_players(self, team):
@@ -260,12 +295,19 @@ class GameScrapper:
 
 
 class Team:
-    def __init__(self, info_box, name, is_home):
-        self.info_box = info_box
+
+    def __init__(self, name, record, is_home, score):
         self.name = name
-        self.record = None
+        self.record = record
         self.is_home = is_home
         self.opponent = None
-        self.score = None
+        self.score = score
         self.players = None
         self.stats = None
+        self.elo_rating = None
+
+
+class EloRating:
+
+    def __init__(self):
+        self.teams = {}

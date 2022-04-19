@@ -3,17 +3,19 @@ import pickle
 import requests
 from bs4 import BeautifulSoup
 from .setting import ScrapperSetting
+from .tools import PickleTools
 from .game_scrapper import GameScrapper
 
 
 class SeasonScrapper:
 
     def __init__(self, link, state, state_name):
+        self.setting = ScrapperSetting()
+        self.pickle = PickleTools()
+
         self.link = link
         self.state = state
         self.state_name = state_name
-
-        self.setting = ScrapperSetting()
         self.game_scrapper = None
 
         self.season = None
@@ -21,19 +23,15 @@ class SeasonScrapper:
         self.games = []
 
     def test(self):
-        url = 'https://www.basketball-reference.com/boxscores/202008140HOU.html'
-        url = 'https://www.basketball-reference.com/boxscores/201910220TOR.html'
-        url = 'https://www.basketball-reference.com/boxscores/201405080MIA.html'
-        url = 'https://www.basketball-reference.com/boxscores/202008150POR.html'
         url = 'https://www.basketball-reference.com/boxscores/202008170DEN.html'
-        game = (url, ['UTA', 'DEN'])
-        self.game_scrapper = GameScrapper(game, '2000')
+        self.game_scrapper = GameScrapper(url, '2000')
         self.game_scrapper.main()
         print(1)
 
     def main(self):
         soup = self.get_soup(self.link)
         self.parse_data(soup)
+        self.process_games()
         print(f'Season was parsed and processed: {self.season}')
 
     @staticmethod
@@ -45,7 +43,6 @@ class SeasonScrapper:
         self.parse_season(soup)
         self.parse_months(soup)
         self.parse_games()
-        self.process_games()
 
     def parse_season(self, soup):
         h1 = soup.find('h1')
@@ -76,24 +73,14 @@ class SeasonScrapper:
                 if game_link is None:
                     continue
 
-                parent = game_link.parent.parent
-                visitor = parent.find("td", {"data-stat": "visitor_team_name"}).find("a")["href"].split("/")[-2]
-                home = parent.find("td", {"data-stat": "home_team_name"}).find("a")["href"].split("/")[-2]
-                games_list.append(('https://www.basketball-reference.com' + game_link['href'], [visitor, home]))
+                games_list.append('https://www.basketball-reference.com' + game_link['href'])
         return games_list
 
     def process_games(self):
         for i in range(self.state.current_game, len(self.state.games), 1):
-            game = self.games[i]
-            self.game_scrapper = GameScrapper(game, self.season)
+            self.game_scrapper = GameScrapper(self.games[i], self.season)
             self.game_scrapper.main()
 
-            # update state
             self.state.current_game += 1
-            self.save_state()
-            # print(f'State was updated')
-            time.sleep(5)
-
-    def save_state(self):
-        with open(self.state_name, 'wb') as outp:
-            pickle.dump(self.state, outp, pickle.HIGHEST_PROTOCOL)
+            self.pickle.save_state(self.state_name, self.state)
+            time.sleep(2)

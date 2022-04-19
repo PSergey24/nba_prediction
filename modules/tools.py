@@ -1,4 +1,6 @@
+import os
 import requests
+import pickle
 from bs4 import BeautifulSoup
 
 
@@ -23,3 +25,20 @@ class Tools:
                 text = th.text
                 stats.update({data_stat.lower(): text.lower()})
         print(stats)
+
+
+class PickleTools:
+
+    @staticmethod
+    def save_state(name, variable):
+        with open(name, 'wb') as outp:
+            pickle.dump(variable, outp, pickle.HIGHEST_PROTOCOL)
+
+    @staticmethod
+    def get_state(name):
+        if os.path.exists(name) is True:
+            with open(name, 'rb') as inp:
+                state = pickle.load(inp)
+            return state
+        else:
+            return False
