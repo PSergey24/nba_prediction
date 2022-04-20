@@ -1,4 +1,3 @@
-import os
 import requests
 import pickle
 from bs4 import BeautifulSoup
@@ -36,9 +35,15 @@ class PickleTools:
 
     @staticmethod
     def get_state(name):
-        if os.path.exists(name) is True:
-            with open(name, 'rb') as inp:
-                state = pickle.load(inp)
-            return state
-        else:
-            return False
+        with open(name, 'rb') as inp:
+            state = pickle.load(inp)
+        return state
+
+
+class BSTools:
+
+    @staticmethod
+    def get_soup(url: str) -> BeautifulSoup:
+        response = requests.get(url)
+        return BeautifulSoup(response.text, 'lxml')
+

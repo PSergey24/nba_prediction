@@ -4,7 +4,7 @@ import math
 class EloCounter:
 
     @staticmethod
-    def get_elo(team_elo, opp_elo, team_score, opp_score):
+    def get_elo(team_elo: float, opp_elo: float, team_score: int, opp_score: int) -> float:
         mov = abs(team_score - opp_score)
         if team_score > opp_score:
             elo_difference_winner = team_elo - opp_elo
