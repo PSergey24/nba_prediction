@@ -31,6 +31,7 @@ class GameScrapper:
     def main(self):
         soup = self.bs_tools.get_soup(self.link)
         self.parse_data(soup)
+        self.get_game_rosters()
         self.update_elo_rating()
         self.save_data_to_csv()
         print(f'Game {self.visitor.name} - {self.home.name} was parsed. Season {self.season}, {self.time}')
@@ -94,7 +95,7 @@ class GameScrapper:
 
     def parse_game_table(self, soup: BeautifulSoup) -> None:
         for team_object in [self.visitor, self.home]:
-            # team_object.players = self.parse_players_info(soup, team_object.name)
+            team_object.players = self.parse_players_info(soup, team_object.name)
             team_object.stats = self.parse_team_info(soup, team_object.name)
 
     def parse_players_info(self, soup: BeautifulSoup, team_name: str) -> dict:
@@ -237,6 +238,14 @@ class GameScrapper:
             return new_team
         return team
 
+    def get_game_rosters(self):
+        self.home.roster = self.get_roster(self.home.players)
+        self.visitor.roster = self.get_roster(self.visitor.players)
+
+    @staticmethod
+    def get_roster(players_dict: dict) -> List[str]:
+        return [key for key in players_dict if 'reason' not in players_dict[key]]
+
     def update_elo_rating(self) -> None:
         visitor_old, home_old = self.get_old_elo_rating(self.state.teams_elo_rating)
         self.visitor.elo_rating = self.elo_counter.get_elo(visitor_old, home_old, int(self.visitor.score), int(self.home.score))
@@ -262,7 +271,7 @@ class GameScrapper:
 
     def save_data_to_csv(self) -> None:
         self.save_teams_stats()
-        # self.save_players_stats()
+        self.save_players_stats()
 
     def save_teams_stats(self) -> None:
         self.save_team(self.visitor)
@@ -272,14 +281,15 @@ class GameScrapper:
         name = 'data/row_data/teams/' + team.name + '_games.csv'
         is_exist = os.path.exists(name)
         data = [str(item) for item in team.stats.values()]
-        data = [self.season, self.season_stage, team.record, str(team.is_home), team.opponent, self.score,
-                ", ".join(team.inactive), team.elo_rating, self.time] + data
+        data = [self.season, self.season_stage, self.link, team.record, str(team.is_home), team.opponent, self.score,
+                ", ".join(team.roster), ", ".join(team.inactive), team.elo_rating, self.time] + data
 
         with open(name, 'a') as csvfile:
             writer = csv.writer(csvfile)
             if is_exist is False:
                 header = list(team.stats.keys())
-                header = ['season', 'season_stage', 'record', 'is_home', 'opponent', 'score', 'inactive', 'ELO', 'time'] + header
+                header = ['season', 'season_stage', 'link', 'record', 'is_home', 'opponent', 'score', 'roster',
+                          'inactive', 'ELO', 'time'] + header
                 writer.writerow(header)
             writer.writerow(data)
 
@@ -318,4 +328,5 @@ class Team:
         self.players = None
         self.stats = None
         self.elo_rating = None
+        self.roster = None
         self.inactive = []

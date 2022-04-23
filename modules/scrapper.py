@@ -32,7 +32,7 @@ class DataScrapper:
     def process_seasons(self) -> None:
         for i in range(self.state.current_season_index, len(self.state.seasons), 1):
             self.process_season(i)
-            self.update_state()
+            # self.update_state()
 
     def process_season(self, index: int) -> None:
         self.season_scrapper = SeasonScrapper(self.seasons[index], self.state)

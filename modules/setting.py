@@ -2,19 +2,22 @@
 # www.basketball-reference.com
 class ScrapperSetting:
     TEAMS_FULL_NAME = {'atlanta hawks': 1, 'boston celtics': 2, 'brooklyn nets': 3, 'new jersey nets': 3,
-                       'washington wizards': 4, 'cleveland cavaliers': 5, 'charlotte hornets': 6, 'chicago bulls': 7,
+                       'washington wizards': 4, 'cleveland cavaliers': 5, 'Charlotte Bobcats': 32,
+                       'charlotte hornets': 6, 'chicago bulls': 7,
                        'dallas mavericks': 8, 'denver nuggets': 9, 'detroit pistons': 10, 'golden state warriors': 11,
                        'houston rockets': 12, 'indiana pacers': 13, 'los angeles lakers': 14,
-                       'los angeles clippers': 15, 'memphis grizzlies': 16, 'vancouver grizzlies': 16, 'miami heat': 17, 'milwaukee bucks': 18,
-                       'minnesota timberwolves': 19, 'new orleans pelicans': 20, 'new york knicks': 21,
-                       'oklahoma city thunder': 22, 'orlando magic': 23, 'portland trail blazers': 24,
+                       'los angeles clippers': 15, 'vancouver grizzlies': 16, 'miami heat': 17, 'milwaukee bucks': 18,
+                       'minnesota timberwolves': 19, 'new orleans pelicans': 6, 'new york knicks': 21,
+                       'oklahoma city thunder': 31, 'orlando magic': 23, 'portland trail blazers': 24,
                        'philadelphia 76ers': 25, 'phoenix suns': 26, 'sacramento kings': 27, 'san antonio spurs': 28,
-                       'toronto raptors': 29, 'utah jazz': 30, 'seattle supersonics': 31}
+                       'toronto raptors': 29, 'utah jazz': 30, 'seattle supersonics': 31, 'memphis grizzlies': 16,
+                       'new orleans hornets': 6, 'new orleans/oklahoma city hornets': 6}
 
-    TEAMS_SHORT_NAME = {'ATL': 1, 'BOS': 2, 'BRK': 3, 'NJN': 3, 'WAS': 4, 'CLE': 5, 'CHO': 6, 'CHH': 6, 'CHI': 7,
-                        'DAL': 8, 'DEN': 9, 'DET': 10, 'GSW': 11, 'HOU': 12, 'IND': 13, 'LAL': 14, 'LAC': 15, 'MEM': 16, 'VAN': 16,
-                        'MIA': 17, 'MIL': 18, 'MIN': 19, 'NOP': 20, 'NYK': 21, 'OKC': 22, 'ORL': 23, 'POR': 24,
-                        'PHI': 25, 'PHO': 26, 'SAC': 27, 'SAS': 28, 'TOR': 29, 'UTA': 30, 'SEA': 31}
+    TEAMS_SHORT_NAME = {'ATL': 1, 'BOS': 2, 'BRK': 3, 'NJN': 3, 'WAS': 4, 'CLE': 5, 'CHA': 32, 'CHO': 32, 'CHH': 6,
+                        'CHI': 7, 'DAL': 8, 'DEN': 9, 'DET': 10, 'GSW': 11, 'HOU': 12, 'IND': 13, 'LAL': 14, 'LAC': 15,
+                        'VAN': 16, 'MIA': 17, 'MIL': 18, 'MIN': 19, 'NOP': 6, 'NYK': 21, 'OKC': 31, 'ORL': 23,
+                        'POR': 24, 'PHI': 25, 'PHO': 26, 'SAC': 27, 'SAS': 28, 'TOR': 29, 'UTA': 30, 'SEA': 31,
+                        'MEM': 16, 'NOH': 6, 'NOK': 6}
 
     TEAMS = {'atlanta hawks': 'ATL',
              'boston celtics': 'BOS',
