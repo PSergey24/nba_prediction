@@ -7,7 +7,7 @@ from .tools import PickleTools
 class StateWorker:
 
     def __init__(self):
-        self.file_way = 'data/row_data/state.pkl'
+        self.file_way = 'data/raw_data/state.pkl'
         self.pickle = PickleTools()
 
     def get_state(self) -> State:

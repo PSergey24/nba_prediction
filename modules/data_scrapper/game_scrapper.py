@@ -67,7 +67,7 @@ class GameScrapper:
 
         teams = []
         for i, box in enumerate(score_boxes):
-            a = box.parent.find("a", {"itemprop": "name"})
+            a = box.parent.find("strong").find("a")
             short_name = a.attrs['href'].split('/')[-2]
             is_home = False if i == 0 else True
 
@@ -278,7 +278,7 @@ class GameScrapper:
         self.save_team(self.home)
 
     def save_team(self, team: Team) -> None:
-        name = 'data/row_data/teams/' + team.name + '_games.csv'
+        name = 'data/raw_data/teams/' + team.name + '_games.csv'
         is_exist = os.path.exists(name)
         data = [str(item) for item in team.stats.values()]
         data = [self.season, self.season_stage, self.link, team.record, str(team.is_home), team.opponent, self.score,
@@ -303,7 +303,7 @@ class GameScrapper:
             if 'reason' in team.players[player]:
                 continue
 
-            name = 'data/row_data/players/' + player + '.csv'
+            name = 'data/raw_data/players/' + player + '.csv'
             is_exist = os.path.exists(name)
             data = [str(item) for item in team.players[player].values()]
             data = [self.season, team.name, self.score, team.opponent, str(team.is_home), self.time] + data
