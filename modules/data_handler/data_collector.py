@@ -29,8 +29,9 @@ class DataCollector:
         files_list = [name for name in os.listdir(directory) if '.csv' in name]
         for file in files_list:
             df = pd.read_csv(directory + file)
-            df = df.iloc[:, 5:12]
-            df.drop(['inactive', 'ELO'], axis=1, inplace=True)
+            df = df.iloc[:, 3:12]
+            df.drop(['record', 'inactive', 'ELO'], axis=1, inplace=True)
+            df['previous_time'] = df.time.shift(1).fillna('')
             self.teams.update({file.split('_')[0]: df})
         print(f'teams are read')
 
@@ -60,13 +61,16 @@ class DataCollector:
 
                 home = self.get_field_home(team_1)
                 winner = self.get_field_winner(home, team_1)
+                t1_is_b2b = self.get_field_b2b_game(team_1['time'], team_1['previous_time'])
+                t2_is_b2b = self.get_field_b2b_game(team_2['time'].values[0], team_2['previous_time'].values[0])
                 players_1 = self.get_field_players(team_1['roster'], team_1['time'], 1)
                 players_2 = self.get_field_players(team_2['roster'].values[0], team_1['time'], 2)
 
-                data = {'team_1': team_1['ELO'], 'team_2': team_2['ELO'].values[0]}
+                data = {'name_1': team, 'score': team_1['score'], 'name_2': team_1['opponent'], 'link': team_1['link'],
+                        'team_1': team_1['ELO'], 'team_2': team_2['ELO'].values[0]}
                 data |= players_1
                 data |= players_2
-                data.update({'home': home, 'Y': winner})
+                data.update({'t1_b2b': t1_is_b2b, 't2_b2b': t2_is_b2b, 'home': home, 'Y': winner})
 
                 index = team_2.axes[0].values[0]
                 list_games.append(data)
@@ -75,7 +79,7 @@ class DataCollector:
 
             print(f'team was processed {team}')
         self.df = pd.DataFrame(list_games)
-        self.df.to_csv('data/training_data/dataset_01.csv', encoding='utf-8')
+        self.df.to_csv('data/training_data/dataset_03.csv', encoding='utf-8')
         print('dataset was created')
 
     @staticmethod
@@ -90,6 +94,15 @@ class DataCollector:
         else:
             winner = 1
         return winner
+
+    @staticmethod
+    def get_field_b2b_game(current_time, previous_time):
+        if previous_time == '' or current_time == '':
+            return 0
+
+        current = int(current_time.split(',')[-2].split()[-1])
+        previous = int(previous_time.split(',')[-2].split()[-1])
+        return 1 if current - previous == 1 else 0
 
     def get_field_players(self, players, time, team):
         players_per = []
