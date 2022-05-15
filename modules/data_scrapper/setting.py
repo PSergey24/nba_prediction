@@ -24,7 +24,7 @@ class ScrapperSetting:
              'brooklyn nets': 'BRK',
              'new jersey nets': 'NJN',
              'cleveland cavaliers': 'CLE',
-             'charlotte hornets': ['CHO', 'CHH'],
+             'charlotte hornets': 'CHO',
              'chicago bulls': 'CHI',
              'dallas mavericks': 'DAL',
              'denver nuggets': 'DEN',
@@ -46,7 +46,7 @@ class ScrapperSetting:
              'philadelphia 76ers': 'PHI',
              'phoenix suns': 'PHO',
              'sacramento kings': 'SAC',
-             'San Antonio Spurs': 'SAS',
+             'san antonio spurs': 'SAS',
              'toronto raptors': 'TOR',
              'utah jazz': 'UTA',
              'washington wizards': 'WAS'
