@@ -16,7 +16,6 @@ class DataScrapper:
         self.get_state()
         self.get_seasons()
         self.process_seasons()
-        print(f'Finished')
 
         # self.test()
 

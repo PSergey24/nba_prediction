@@ -12,7 +12,6 @@ class RosterScrapper:
     def update(self):
         links = self.get_links()
         self.process_teams(links)
-        print('rosters were updated')
 
     def get_links(self):
         soup = self.bs_tools.get_soup('https://www.basketball-reference.com/teams/')
@@ -22,7 +21,6 @@ class RosterScrapper:
     def process_teams(self, links):
         for link in links:
             self.process_team(link)
-            print(f'roster of team was updated: {link}')
 
     def process_team(self, link):
         soup = self.bs_tools.get_soup(link)
