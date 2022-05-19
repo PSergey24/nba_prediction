@@ -16,3 +16,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: always
+  checker:
+    build: .
+    command: python pipeline/watchdog_checker.py
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always

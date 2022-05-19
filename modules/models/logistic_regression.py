@@ -38,7 +38,7 @@ class Trainer:
         self.criterion = torch.nn.BCELoss(reduction='mean')
 
     def train(self):
-        data = pd.read_csv('data/training_data/dataset_03.csv')
+        data = pd.read_csv('data/training_data/dataset_04_20_may.csv')
         data, test_data = self.get_data(data, 0.99)
         train_data, validation_data = self.get_data(data, 0.85)
 

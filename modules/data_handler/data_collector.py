@@ -79,7 +79,7 @@ class DataCollector:
 
             print(f'team was processed {team}')
         self.df = pd.DataFrame(list_games)
-        self.df.to_csv('data/training_data/dataset_03.csv', encoding='utf-8')
+        self.df.to_csv('data/training_data/dataset_04_20_may.csv', encoding='utf-8')
         print('dataset was created')
 
     @staticmethod

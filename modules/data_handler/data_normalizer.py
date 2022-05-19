@@ -6,7 +6,10 @@ from modules.data_handler.setting import NormalizerSetting
 
 class DataNormalizer:
 
-    def __init__(self):
+    def __init__(self, players_list=None, teams_list=None):
+        self.players_list = players_list
+        self.teams_list = teams_list
+
         self.min_max_stats = {'teams': None, 'teams_10_average': None, 'players': None, 'players_10_average': None,
                               'players_season_average': None}
 
@@ -36,22 +39,9 @@ class DataNormalizer:
 
     def to_normalize_data(self):
         self.min_max_stats = self.get_stats('data/clean_data/min_max_stats.pkl')
-
-        for key, directory in NormalizerSetting.stats_directories.items():
-            files_list = [name for name in os.listdir(directory) if '.csv' in name]
-            for file in files_list:
-                df = pd.read_csv(directory + file)
-                df.drop(NormalizerSetting.stats_drop_lists[key], axis=1, inplace=True)
-                column_names = df.columns.values.tolist()
-                for column in column_names:
-
-                    self.min_max_stats[key][column] = self.correct_min_max(column, self.min_max_stats[key][column])
-                    df[column] = self.to_normalize(df[column], self.min_max_stats[key][column])
-
-                way = directory + 'normalized/' + file
-                df.to_csv(way, encoding='utf-8')
-                print(f'processed file: {file}')
-            print(f'processed directory: {directory}')
+        self.correct_min_max()
+        self.to_normalize_category('teams')
+        self.to_normalize_category('players')
 
     @staticmethod
     def get_stats(name):
@@ -59,13 +49,38 @@ class DataNormalizer:
             stats = pickle.load(inp)
         return stats
 
-    @staticmethod
-    def correct_min_max(column, ds):
+    def correct_min_max(self):
         extreme_values = {'PER': {'max': 45, 'min': -45}}
-        if column in extreme_values:
-            ds['max'] = extreme_values[column]['max']
-            ds['min'] = extreme_values[column]['min']
-        return ds
+        for key, item in self.min_max_stats.items():
+            for k in extreme_values:
+                if k in list(item):
+                    item.loc['max', k] = extreme_values[k]['max']
+                    item.loc['min', k] = extreme_values[k]['min']
+
+    def to_normalize_category(self, category):
+        for key, directory in NormalizerSetting.stats_directories.items():
+            if category not in directory:
+                continue
+
+            files_list = self.get_files_list(directory, category)
+            for file in files_list:
+                df = pd.read_csv(directory + file)
+                df.drop(NormalizerSetting.stats_drop_lists[key], axis=1, inplace=True)
+                column_names = df.columns.values.tolist()
+                for column in column_names:
+                    df[column] = self.to_normalize(df[column], self.min_max_stats[key][column])
+
+                way = directory + 'normalized/' + file
+                df.to_csv(way, encoding='utf-8')
+                print(f'normalized file: {file}')
+
+    def get_files_list(self, directory, category):
+        if category == 'players' and self.players_list is None or category == 'teams' and self.teams_list is None:
+            return [name for name in os.listdir(directory) if '.csv' in name]
+        elif category == 'players' and self.players_list is not None:
+            return self.players_list
+        elif category == 'teams' and self.teams_list is not None:
+            return self.teams_list
 
     @staticmethod
     def to_normalize(column, y):

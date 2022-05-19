@@ -4,6 +4,21 @@ import pandas as pd
 
 class DataCleaner:
 
+    def __init__(self, players_list=None, teams_list=None):
+        self.players_list = players_list
+        self.teams_list = teams_list
+
+        self.update_list()
+
+    def update_list(self):
+        if self.players_list is None:
+            directory = 'data/raw_data/players/'
+            self.players_list = [name for name in os.listdir(directory) if '.csv' in name]
+
+        if self.teams_list is None:
+            directory = 'data/raw_data/teams/'
+            self.teams_list = [name for name in os.listdir(directory) if '.csv' in name]
+
     def main(self):
         self.update_data()
 
@@ -13,13 +28,12 @@ class DataCleaner:
 
     def update_players_data(self):
         directory = 'data/raw_data/players/'
-        players_list = [name for name in os.listdir(directory) if '.csv' in name]
 
-        for player in players_list:
+        for player in self.players_list:
             way_raw_data = directory + player
             df = pd.read_csv(way_raw_data)
             self.update_player_data(df, player)
-            print(f'processed player: {player}')
+            print(f'cleaned player: {player}')
 
     def update_player_data(self, df, name):
         self.update_average_player_data(df, name)
@@ -45,13 +59,12 @@ class DataCleaner:
 
     def update_teams_data(self):
         directory = 'data/raw_data/teams/'
-        teams_list = [name for name in os.listdir(directory) if '.csv' in name]
 
-        for team in teams_list:
+        for team in self.teams_list:
             way_raw_data = directory + team
             df = pd.read_csv(way_raw_data)
             self.update_team_data(df, team)
-            print(f'processed team: {team}')
+            print(f'cleaned team: {team}')
 
     def update_team_data(self, df, team):
         self.update_last_game_team_data(df.copy(), team)

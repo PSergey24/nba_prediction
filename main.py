@@ -3,6 +3,7 @@ from modules.data_cleaner import DataCleaner
 from modules.data_handler.data_normalizer import DataNormalizer
 from modules.data_handler.data_collector import DataCollector
 from modules.models.logistic_regression import Trainer
+from modules.watchdog_checker import Checker
 
 
 if __name__ == '__main__':
@@ -14,11 +15,14 @@ if __name__ == '__main__':
     trainer = Trainer()
 
     # data_scrapper.main()
-    # data_cleaner.main()
-    # data_handler.save_min_max_stats()
-    # data_normalizer.to_normalize_data()
-    # data_collector.main()
+    # roster_scrapper.update()
 
+    # data_cleaner.main()
+    # data_normalizer.to_normalize_data()
+
+    # file_checker = Checker()
+    # file_checker.main()
+
+    # data_collector.main()
     # trainer.train()
 
-    roster_scrapper.update()
