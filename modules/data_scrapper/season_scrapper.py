@@ -9,7 +9,7 @@ from .state_worker import StateWorker, State
 
 class SeasonScrapper:
 
-    def __init__(self, link: str, state: State):
+    def __init__(self, link: str, state: State = None):
         self.setting = ScrapperSetting()
         self.state_worker = StateWorker()
         self.bs_tools = BSTools()
@@ -18,31 +18,36 @@ class SeasonScrapper:
         self.link = link
         self.state = state
 
+        self.soup = None
         self.season = None
         self.months = []
         self.games = []
 
     def main(self) -> None:
-        soup = self.bs_tools.get_soup(self.link)
-        self.parse_data(soup)
+        self.get_soup()
+        self.parse_data()
         self.process_games()
         print(f'Season was parsed and processed: {self.season}')
 
-    def parse_data(self, soup: BeautifulSoup) -> None:
-        self.parse_season_name(soup)
-        self.parse_list_months(soup)
+    def get_soup(self):
+        self.soup = self.bs_tools.get_soup(self.link)
+
+    def parse_data(self) -> None:
+        self.parse_season_name()
+        self.parse_list_months()
         self.parse_list_games()
 
-    def parse_season_name(self, soup: BeautifulSoup) -> None:
-        self.season = soup.find('h1').find('span').text
+    def parse_season_name(self) -> None:
+        self.season = self.soup.find('h1').find('span').text
 
-    def parse_list_months(self, soup: BeautifulSoup) -> None:
-        month_block = soup.find('div', class_='filter')
+    def parse_list_months(self) -> None:
+        month_block = self.soup.find('div', class_='filter')
         month_list = month_block.find_all('a')
         self.months = ['https://www.basketball-reference.com' + month['href'] for month in month_list]
 
     def parse_list_games(self) -> None:
         games_list = self.get_list_games()
+        games_list = [item['link'] for item in games_list if item['link'] is not None]
         if len(games_list) > len(self.state.games):
             if not self.state.games:
                 self.state.current_game_index = 0
@@ -50,17 +55,21 @@ class SeasonScrapper:
             print(f'Links of games was parsed: season {self.season}, count {len(games_list)}')
         self.games = self.state.games
 
-    def get_list_games(self) -> List[str]:
-        game_list = []
-        for month in self.months:
-            game_list.extend(self.process_month(month))
-        return game_list
+    def get_list_games(self) -> List[dict]:
+        return [item for month in self.months for item in self.process_month(month)]
 
-    def process_month(self, month: str) -> List[str]:
+    def process_month(self, month: str) -> List[dict]:
         soup_month = self.bs_tools.get_soup(month)
-        games = soup_month.find_all("td", {"data-stat": "box_score_text"})
-        games_list = ['https://www.basketball-reference.com' + game.find('a')['href'] for game in games
-                      if game.find('a') is not None]
+        rows = soup_month.find('tbody').find_all("tr", {'class': None})
+        games_list = []
+        for row in rows:
+            a = row.find("td", {"data-stat": "box_score_text"}).find('a')
+            link = None if a is None else 'https://www.basketball-reference.com' + a['href']
+            date = row.find(attrs={"data-stat": "date_game"}).text
+            visitor = row.find(attrs={"data-stat": "visitor_team_name"}).find('a')['href'].split('/')[-2]
+            home = row.find(attrs={"data-stat": "home_team_name"}).find('a')['href'].split('/')[-2]
+            game = {'date': date, 'visitor': visitor, 'home': home, 'link': link}
+            games_list.append(game)
         return games_list
 
     def process_games(self) -> None:

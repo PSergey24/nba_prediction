@@ -1,4 +1,4 @@
-from modules.data_scrapper import DataScrapper, RosterScrapper
+from modules.data_scrapper import DataScrapper, RosterScrapper, ScheduleScrapper
 from modules.data_cleaner import DataCleaner
 from modules.data_handler.data_normalizer import DataNormalizer
 from modules.data_handler.data_collector import DataCollector
@@ -8,14 +8,16 @@ from modules.watchdog_checker import Checker
 
 if __name__ == '__main__':
     data_scrapper = DataScrapper()
+    roster_scrapper = RosterScrapper()
+    schedule_scrapper = ScheduleScrapper()
     data_cleaner = DataCleaner()
     data_normalizer = DataNormalizer()
     data_collector = DataCollector()
-    roster_scrapper = RosterScrapper()
     trainer = Trainer()
 
-    # data_scrapper.main()
-    # roster_scrapper.update()
+    data_scrapper.main()
+    # roster_scrapper.main()
+    # schedule_scrapper.main()
 
     # data_cleaner.main()
     # data_normalizer.to_normalize_data()

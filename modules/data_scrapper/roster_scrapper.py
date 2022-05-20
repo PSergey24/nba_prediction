@@ -9,7 +9,7 @@ class RosterScrapper:
     def __init__(self):
         self.bs_tools = BSTools()
 
-    def update(self):
+    def main(self):
         links = self.get_links()
         self.process_teams(links)
 
