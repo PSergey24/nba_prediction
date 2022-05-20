@@ -4,6 +4,7 @@ from modules.data_handler.data_normalizer import DataNormalizer
 from modules.data_handler.data_collector import DataCollector
 from modules.models.logistic_regression import Trainer
 from modules.watchdog_checker import Checker
+from modules.game_predictor import GamePredictor
 
 
 if __name__ == '__main__':
@@ -14,8 +15,9 @@ if __name__ == '__main__':
     data_normalizer = DataNormalizer()
     data_collector = DataCollector()
     trainer = Trainer()
+    game_predictor = GamePredictor()
 
-    data_scrapper.main()
+    # data_scrapper.main()
     # roster_scrapper.main()
     # schedule_scrapper.main()
 
@@ -27,4 +29,6 @@ if __name__ == '__main__':
 
     # data_collector.main()
     # trainer.train()
+    game_predictor.main()
+
 
