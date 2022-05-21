@@ -27,8 +27,8 @@ if __name__ == '__main__':
     # file_checker = Checker()
     # file_checker.main()
 
-    # data_collector.main()
+    data_collector.main()
     # trainer.train()
-    game_predictor.main()
+    # game_predictor.main()
 
 

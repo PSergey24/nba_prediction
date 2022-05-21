@@ -2,6 +2,7 @@ import os
 import pickle
 import pandas as pd
 from modules.data_handler.setting import NormalizerSetting
+from modules.features_collector import FeatureCollector
 
 
 class DataCollector:
@@ -57,34 +58,25 @@ class DataCollector:
 
         for team in self.teams:
             for i, team_1 in reversed(list(self.teams[team].iterrows())):
-                team_2 = self.teams[team_1['opponent']][self.teams[team_1['opponent']]['time'] == team_1['time']]
+                feature_collector = FeatureCollector(team, team_1['opponent'], team_1['time'], False, self.players_info)
+                features = feature_collector.main()
 
-                home = self.get_field_home(team_1)
-                winner = self.get_field_winner(home, team_1)
-                t1_is_b2b = self.get_field_b2b_game(team_1['time'], team_1['previous_time'])
-                t2_is_b2b = self.get_field_b2b_game(team_2['time'].values[0], team_2['previous_time'].values[0])
-                players_1 = self.get_field_players(team_1['roster'], team_1['time'], 1)
-                players_2 = self.get_field_players(team_2['roster'].values[0], team_1['time'], 2)
+                winner = self.get_field_winner(features['home'], team_1)
 
-                data = {'name_1': team, 'score': team_1['score'], 'name_2': team_1['opponent'], 'link': team_1['link'],
-                        'team_1': team_1['ELO'], 'team_2': team_2['ELO'].values[0]}
-                data |= players_1
-                data |= players_2
-                data.update({'t1_b2b': t1_is_b2b, 't2_b2b': t2_is_b2b, 'home': home, 'Y': winner})
+                data = {'name_1': team, 'score': team_1['score'], 'name_2': team_1['opponent'], 'link': team_1['link']}
+                data |= features
+                data.update({'Y': winner})
 
-                index = team_2.axes[0].values[0]
+                index = self.teams[team_1['opponent']].index[self.teams[team_1['opponent']]['time'] == team_1['time']].tolist()[0]
+
                 list_games.append(data)
                 self.teams[team].drop([i], axis=0, inplace=True)
                 self.teams[team_1['opponent']].drop([index], axis=0, inplace=True)
 
             print(f'team was processed {team}')
         self.df = pd.DataFrame(list_games)
-        self.df.to_csv('data/training_data/dataset_04_20_may.csv', encoding='utf-8')
+        self.df.to_csv('data/training_data/dataset_05_21_may.csv', encoding='utf-8')
         print('dataset was created')
-
-    @staticmethod
-    def get_field_home(game):
-        return 1 if game['is_home'] is True else 0
 
     @staticmethod
     def get_field_winner(home, game):
@@ -94,32 +86,6 @@ class DataCollector:
         else:
             winner = 1
         return winner
-
-    @staticmethod
-    def get_field_b2b_game(current_time, previous_time):
-        if previous_time == '' or current_time == '':
-            return 0
-
-        current = int(current_time.split(',')[-2].split()[-1])
-        previous = int(previous_time.split(',')[-2].split()[-1])
-        return 1 if current - previous == 1 else 0
-
-    def get_field_players(self, players, time, team):
-        players_per = []
-        players_list = players.split(',')
-
-        for player in players_list:
-            field = self.players_info['players_last_10'][player.strip()][self.players_info['players_last_10'][player.strip()]['time'] == time]
-            players_per.append(field['PER'].values[0])
-
-        players_per.sort(reverse=True)
-        if len(players_per) < 8:
-            while len(players_per) < 8:
-                players_per.append(-1)
-
-        players_per = players_per[:8]
-        d = {'t' + str(team) + '_p' + str(i) + '_per': players_per[i] for i in range(0, len(players_per), 1)}
-        return d
 
     # save info about players to .pkl
     def save_players(self):
