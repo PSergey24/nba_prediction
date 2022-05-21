@@ -36,8 +36,19 @@ class DataCleaner:
             print(f'cleaned player: {player}')
 
     def update_player_data(self, df, name):
+        df['seconds'] = df['minutes'].apply(self.min_to_sec)
+        df['per/min'] = df.apply(lambda x: self.per_in_min(x.seconds, x.PER), axis=1)
         self.update_average_player_data(df, name)
         self.update_last_game_player_data(df.copy(), name)
+
+    @staticmethod
+    def min_to_sec(time):
+        min, sec = time.split(':')
+        return 60 * int(min) + int(sec)
+
+    @staticmethod
+    def per_in_min(seconds, per):
+        return 0 if seconds == 0 else per * 60 / seconds
 
     @staticmethod
     def update_average_player_data(df, name):

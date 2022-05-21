@@ -22,13 +22,14 @@ if __name__ == '__main__':
     # schedule_scrapper.main()
 
     # data_cleaner.main()
+    # data_normalizer.save_min_max_stats()
     # data_normalizer.to_normalize_data()
 
     # file_checker = Checker()
     # file_checker.main()
 
-    data_collector.main()
+    # data_collector.main()
     # trainer.train()
-    # game_predictor.main()
+    game_predictor.main()
 
 

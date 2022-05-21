@@ -85,8 +85,8 @@ class FeatureCollector:
     def get_players(self, input_list, team_index):
         player_list = []
         for player in input_list:
-            per = self.get_player_info(player)
-            player_dict = {'name': player, 'PER': per}
+            per, seconds = self.get_player_info(player)
+            player_dict = {'name': player, 'PER': per, 'seconds': seconds}
             player_list.append(player_dict)
         return self.to_filter_players(player_list, team_index)
 
@@ -98,7 +98,9 @@ class FeatureCollector:
         player = self.get_player_info_normal(player_name)
         player_normalized = self.get_player_info_normalized(player_name)
         list_indexes = player.index[player['time'] == self.date].tolist()
-        return player_normalized['PER'].iloc[list_indexes[0]] if len(list_indexes) > 0 else player_normalized['PER'].iloc[-1]
+        per = player_normalized['PER'].iloc[list_indexes[0]] if len(list_indexes) > 0 else player_normalized['PER'].iloc[-1]
+        seconds = player['seconds'].iloc[list_indexes[0]] if len(list_indexes) > 0 else player['seconds'].iloc[-1]
+        return per, seconds
 
     def get_player_info_normal(self, name):
         return pd.read_csv('data/clean_data/players/10_games_average/' + name + '.csv') if self.new_game is True else self.players_info['players'][name]
