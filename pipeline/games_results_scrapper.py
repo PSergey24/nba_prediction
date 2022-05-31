@@ -1,20 +1,25 @@
 import time
 from datetime import datetime
-from modules.data_scrapper import DataScrapper
+from modules.scrapper import Scrapper
 
 
 class Helper:
 
-    @staticmethod
-    def main():
-        data_scrapper = DataScrapper()
+    def __init__(self):
+        # every half day
+        self.period = 43200
+
+    def main(self):
+        print(f"Game's updater started work (update every {self.period} seconds)")
+        # time.sleep(self.period)
+        data_scrapper = Scrapper()
 
         while True:
             data_scrapper.main()
 
             now = datetime.now()
             print(f"Game's results were updated, {now.strftime('%H:%M:%S')}")
-            time.sleep(40)
+            time.sleep(self.period)
 
 
 if __name__ == '__main__':

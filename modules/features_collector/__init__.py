@@ -1,3 +1,3 @@
-from .features_collector import FeatureCollector
+from .main import FeatureCollectorDB
 
-__all__ = [FeatureCollector]
+__all__ = [FeatureCollectorDB]

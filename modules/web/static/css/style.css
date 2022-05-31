@@ -1,0 +1,15 @@
+h1 {
+    border: 2px #eee solid;
+    color: brown;
+    text-align: center;
+    padding: 10px;
+}
+td, th{
+    padding: 10px;
+    border: 2px #eee solid;
+}
+.games_result{
+    border: 2px #eee solid;
+    text-align: center;
+    padding: 10px;
+}

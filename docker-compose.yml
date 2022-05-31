@@ -1,10 +1,18 @@
 version: '3'
 services:
+  web:
+    build: modules/web
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./modules/web:/app/modules/web
+      - ./modules/db_worker:/app/modules/db_worker
+      - ./data:/app/data
   info-scrapper:
     build: .
     command: python pipeline/info_scrapper.py
     volumes:
-      - ./data:/app/data
+      - ./data/db:/app/data/db
     environment:
       - PYTHONUNBUFFERED=1
     restart: always
@@ -12,15 +20,33 @@ services:
     build: .
     command: python pipeline/games_results_scrapper.py
     volumes:
+      - ./data/db:/app/data/db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+  features-updater:
+    build: .
+    command: python pipeline/features_updater.py
+    volumes:
+      - ./data/db:/app/data/db
+      - ./data/training_data:/app/data/training_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+  lr-model-trainer:
+    build: .
+    command: python pipeline/lr_model_trainer.py
+    volumes:
       - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     restart: always
-  checker:
+  predictor:
     build: .
-    command: python pipeline/watchdog_checker.py
+    command: python pipeline/game_predictor.py
     volumes:
-      - ./data:/app/data
+      - ./data/db:/app/data/db
+      - ./data/models:/app/data/models
     environment:
       - PYTHONUNBUFFERED=1
     restart: always

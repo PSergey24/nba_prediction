@@ -15,9 +15,3 @@ WORKDIR /app
 
 COPY --from=build_image /opt/venv /opt/venv
 COPY --from=build_image /app /app
-
-
-#FROM python:3.8
-#WORKDIR /app/
-#COPY . .
-#RUN pip install -r requirements.txt

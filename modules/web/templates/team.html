@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Team header</title>
+    <link href="static/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div class="content">
+        <table class="games_result">
+            <tr>
+                <th>date</th>
+                <th>visitor</th>
+                <th>visitor points</th>
+                <th>home</th>
+                <th>home points</th>
+                <th>original</th>
+                <th>fg</th>
+                <th>fga</th>
+                <th>fg3</th>
+                <th>fg3a</th>
+                <th>ft</th>
+                <th>fta</th>
+                <th>orb</th>
+                <th>drb</th>
+                <th>ast</th>
+                <th>stl</th>
+                <th>blk</th>
+                <th>tov</th>
+                <th>pf</th>
+                <th>pts</th>
+                <th>ELO after game</th>
+            </tr>
+        {% block content %}
+            {% for game in games %}
+            <tr>
+                <td>{{ game['date'] }}</td>
+                <td>{{ game['visitor'] }}</td>
+                <td>{{ game['pts_visitor'] }}</td>
+                <td>{{ game['home'] }}</td>
+                <td>{{ game['pts_home'] }}</td>
+                <td><a href="{{ game['link'] }}" target="_blank">link</a></td>
+                <td>{{ game['fg'] }}</td>
+                <td>{{ game['fga'] }}</td>
+                <td>{{ game['fg3'] }}</td>
+                <td>{{ game['fg3a'] }}</td>
+                <td>{{ game['ft'] }}</td>
+                <td>{{ game['fta'] }}</td>
+                <td>{{ game['orb'] }}</td>
+                <td>{{ game['drb'] }}</td>
+                <td>{{ game['ast'] }}</td>
+                <td>{{ game['stl'] }}</td>
+                <td>{{ game['blk'] }}</td>
+                <td>{{ game['tov'] }}</td>
+                <td>{{ game['pf'] }}</td>
+                <td>{{ game['pts'] }}</td>
+                <td>{{ game['ELO'] }}</td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+        </table>
+    </div>
+</body>
+</html>
