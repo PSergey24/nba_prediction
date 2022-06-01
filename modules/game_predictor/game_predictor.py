@@ -4,6 +4,7 @@ from pytz import timezone
 from time import strptime
 from modules.models.logistic_regression import LogisticRegression
 from modules.features_collector import FeatureCollectorDB
+from modules.telegram_bot import TelegramBot
 from modules.db_worker import DBWorker
 
 
@@ -13,6 +14,7 @@ class GamePredictor:
         self.model = LogisticRegression(20, 264, 1)
         self.games = None
         self.db_worker = DBWorker('data/db/nba.db')
+        self.tg_bot = TelegramBot()
 
     def main(self):
         games = self.get_schedule()
@@ -104,4 +106,6 @@ class GamePredictor:
     def to_predict(self, features, game):
         data = torch.FloatTensor([recs for recs in features.values()])
         prediction = self.model(data)
-        print(f"{game[3]} | {game[1]} wins {game[2]} with a {round(prediction.item(), 3)} percent chance")
+        message = f"{game[3]} | {game[1]} wins {game[2]} with a {round(prediction.item(), 3)} percent chance"
+        self.tg_bot.send_message(message)
+        print(message)
