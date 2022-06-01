@@ -1,3 +1,4 @@
+import shutil
 from datetime import datetime
 from .season_scrapper import SeasonScrapper
 from modules.db_worker import DBWorker
@@ -7,7 +8,7 @@ from .data import Season, ParsingStatus
 class Scrapper:
 
     def __init__(self):
-        self.status = ParsingStatus(2022, 0)
+        self.status = ParsingStatus(1965, 0)
         self.season_scrapper = None
         self.seasons_list = None
         self.db_worker = DBWorker('data/db/nba.db')
@@ -16,7 +17,7 @@ class Scrapper:
         self.status.franchises = {}
 
     def main(self):
-        self.get_status()
+        self.get_status(is_start=True)
         self.get_seasons()
         self.process_seasons()
         self.db_worker.conn.close()
@@ -92,6 +93,7 @@ class Scrapper:
     def update_status(self):
         self.update_elo_after_season()
         self.update_season_game()
+        self.copy_db()
 
     def update_elo_after_season(self) -> None:
         self.update_status_elo()
@@ -106,3 +108,6 @@ class Scrapper:
         self.status.season += 1
         self.status.game = 0
         self.db_worker.update_game_index(self.status.season, self.status.game)
+
+    def copy_db(self):
+        shutil.copy('data/db/nba.db', f'data/db/db_copies/nba_{self.status.season}.db')

@@ -49,7 +49,7 @@ class GamePredictor:
             day = int(list_time[2].strip().split(' ')[1])
             year = int(list_time[3].strip())
             return year, month, day, hour
-        elif len(list_time) == 4:
+        elif len(list_time) == 3:
             hour = None
             month = int(strptime(list_time[1].strip().split(' ')[0], '%b').tm_mon)
             day = int(list_time[1].strip().split(' ')[1])

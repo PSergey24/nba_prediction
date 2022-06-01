@@ -14,14 +14,14 @@ if __name__ == '__main__':
     # trainer = Trainer()
     # trainer.main()
 
-    game_predictor = GamePredictor()
-    game_predictor.main()
+    # game_predictor = GamePredictor()
+    # game_predictor.main()
 
     # feature_collector = FeatureCollectorDB()
     # feature_collector.main()
 
-    # scrapper = Scrapper()
-    # scrapper.main()
+    scrapper = Scrapper()
+    scrapper.main()
 
 
 

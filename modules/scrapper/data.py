@@ -23,6 +23,7 @@ class Player:
     fta: int
     orb: int
     drb: int
+    trb: int
     ast: int
     stl: int
     blk: int
@@ -42,6 +43,7 @@ class Team:
     fta: int
     orb: int
     drb: int
+    trb: int
     ast: int
     stl: int
     blk: int
@@ -60,6 +62,7 @@ class Game:
     home_name: str
     home: str
     pts_home: int
+    attendance: str
     arena: str
     link: str
     id_visitor: int = None

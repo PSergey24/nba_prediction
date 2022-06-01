@@ -34,17 +34,15 @@ class GameScrapper:
 
     def parse_info_about_game(self) -> None:
         self.parse_header()
-        self.parse_inactive()
+        # self.parse_inactive()
 
     def parse_header(self) -> None:
         h1 = self.game.soup.find('h1')
         stage = h1.text.split(':')
         if len(stage) == 1:
-            self.game.round = 'Regular Season'
-        elif stage[0] == 'Play-In Game':
-            self.game.round = 'Play-In Game'
+            self.game.round = 'Regular'
         else:
-            self.game.round = " ".join(stage[0].split(' ')[-4:-2])
+            self.game.round = 'Play Off'
 
     def parse_inactive(self) -> None:
         wrap = self.game.soup.find('div', id='all_box-' + self.game.home + '-game-advanced', class_="section_wrapper")
@@ -90,32 +88,40 @@ class GameScrapper:
         total_row_soup = self.game.soup.find(id=table_id).find('tfoot').find("tr")
         return self.get_item_stats(total_row_soup, player=False)
 
-    @staticmethod
-    def get_item_stats(soup, player=True):
+    def get_item_stats(self, soup, player=True):
         if soup.find(attrs={"data-stat": "reason"}) is not None:
             return
 
-        fg = int(soup.find(attrs={"data-stat": "fg"}).text)
-        fga = int(soup.find(attrs={"data-stat": "fga"}).text)
-        fg3 = int(soup.find(attrs={"data-stat": "fg3"}).text)
-        fg3a = int(soup.find(attrs={"data-stat": "fg3a"}).text)
-        ft = int(soup.find(attrs={"data-stat": "ft"}).text)
-        fta = int(soup.find(attrs={"data-stat": "fta"}).text)
-        orb = int(soup.find(attrs={"data-stat": "orb"}).text)
-        drb = int(soup.find(attrs={"data-stat": "drb"}).text)
-        ast = int(soup.find(attrs={"data-stat": "ast"}).text)
-        stl = int(soup.find(attrs={"data-stat": "stl"}).text)
-        blk = int(soup.find(attrs={"data-stat": "blk"}).text)
-        tov = int(soup.find(attrs={"data-stat": "tov"}).text)
-        pf = int(soup.find(attrs={"data-stat": "pf"}).text)
-        pts = int(soup.find(attrs={"data-stat": "pts"}).text)
+        fg = self.get_item_stat(soup, 'fg')
+        fga = self.get_item_stat(soup, 'fga')
+        fg3 = self.get_item_stat(soup, 'fg3')
+        fg3a = self.get_item_stat(soup, 'fg3a')
+        ft = self.get_item_stat(soup, 'ft')
+        fta = self.get_item_stat(soup, 'fta')
+        orb = self.get_item_stat(soup, 'orb')
+        drb = self.get_item_stat(soup, 'drb')
+        trb = self.get_item_stat(soup, 'trb')
+        ast = self.get_item_stat(soup, 'ast')
+        stl = self.get_item_stat(soup, 'stl')
+        blk = self.get_item_stat(soup, 'blk')
+        tov = self.get_item_stat(soup, 'tov')
+        pf = self.get_item_stat(soup, 'pf')
+        pts = self.get_item_stat(soup, 'pts')
 
         if player is True:
             name = soup.find(attrs={"data-stat": "player"}).text
             link = soup.find(attrs={"data-stat": "player"}).find('a')['href']
             mp = soup.find(attrs={"data-stat": "mp"}).text
-            return Player(name, mp, fg, fga, fg3, fg3a, ft, fta, orb, drb, ast, stl, blk, tov, pf, pts, link)
-        return Team(fg, fga, fg3, fg3a, ft, fta, orb, drb, ast, stl, blk, tov, pf, pts)
+            return Player(name, mp, fg, fga, fg3, fg3a, ft, fta, orb, drb, trb, ast, stl, blk, tov, pf, pts, link)
+        return Team(fg, fga, fg3, fg3a, ft, fta, orb, drb, trb, ast, stl, blk, tov, pf, pts)
+
+    @staticmethod
+    def get_item_stat(soup, name):
+        cell = soup.find(attrs={"data-stat": name})
+        if cell is not None and cell.text != '':
+            return int(soup.find(attrs={"data-stat": name}).text)
+        else:
+            return None
 
     def update_elo_rating(self) -> None:
         id_visitor = self.game.id_visitor

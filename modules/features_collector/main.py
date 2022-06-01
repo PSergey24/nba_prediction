@@ -105,11 +105,16 @@ class FeatureCollectorDB:
     @staticmethod
     def get_per(player):
         time = player['mp'].split(':')
+        # if len(time) == 1 and time[0] == '':
+        #     return {'mp': None, 'per': None}
+
         m, s = time[0], time[1] if len(time) > 1 else 0
         time_value = round((int(m) * 60 + int(s)) / 60, 3)
 
-        if player['ft'] is None:
-            return {'mp': time_value, 'per': None}
+        # stats_list = ['ft', 'fta', 'fg', 'fga', 'fg3', 'stl', 'blk', 'orb', 'ast', 'drb', 'tov', 'pf']
+        # for stat in stats_list:
+        #     if player[stat] is None:
+        #         return {'mp': time_value, 'per': None}
 
         free_throw_miss = player['fta'] - player['ft']
         field_goal_miss = player['fga'] - player['fg']

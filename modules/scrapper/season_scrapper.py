@@ -55,12 +55,13 @@ class SeasonScrapper:
         home = row.find(attrs={"data-stat": "home_team_name"}).find('a')['href'].split('/')[-2]
         home_name = row.find(attrs={"data-stat": "home_team_name"}).find('a').text
         home_pts = row.find(attrs={"data-stat": "home_pts"}).text
+        attendance = row.find(attrs={"data-stat": "attendance"}).text.replace(',', '')
         arena = row.find(attrs={"data-stat": "arena_name"}).text
         if link is None:
             return Game(date, visitor_name, visitor, visitor_pts, home_name, home,
-                        home_pts, arena, link)
+                        home_pts, attendance, arena, link)
         return Game(date, visitor_name, visitor, int(visitor_pts), home_name, home,
-                    int(home_pts), arena, link)
+                    int(home_pts), attendance, arena, link)
 
     def process_games(self) -> None:
         for i in range(self.status.game, len(self.season.games)):
@@ -81,13 +82,13 @@ class SeasonScrapper:
 
     def save_games_to_db(self):
         self.game_scrapper.game.soup = None
-        games = asdict(self.game_scrapper.game)
-        games = self.pop_keys(games, ['arena', 'home', 'home_inactive', 'home_name', 'home_stats',
+        game = asdict(self.game_scrapper.game)
+        game = self.pop_keys(game, ['home', 'home_inactive', 'home_name', 'home_stats',
                                       'home_roster', 'visitor', 'visitor_inactive', 'visitor_name', 'visitor_stats',
                                       'visitor_roster', 'soup'])
-        games.update({'season': self.status.season})
-        columns = ', '.join(games.keys())
-        values = [int(x) if isinstance(x, bool) else x for x in games.values()]
+        game.update({'season': self.status.season})
+        columns = ', '.join(game.keys())
+        values = [int(x) if isinstance(x, bool) else x for x in game.values()]
         self.db_worker.insert('games', columns, values)
         id_game = self.db_worker.get_game_id()
         return id_game
