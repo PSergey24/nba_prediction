@@ -98,23 +98,21 @@ class FeatureCollectorDB:
         return 1 if pts_visitor > pts_home else 0
 
     def process_players(self, players, j):
-        list_per = [self.get_per(player) for player in players]
-        list_per.sort(key=lambda x: (x['per'] is not None, x['per']), reverse=True)
-        return {f't{j}p{i}_per': item['per'] for i, item in enumerate(list_per[:8])}
+        list_per = [self.handler_get_per(player) for player in players]
+        list_per.sort(key=lambda x: (x['mp'] is not None, x['mp']), reverse=True)
+        return {f't{j}p{i}_per': item['per'] for i, item in enumerate(list_per)}
+
+    def handler_get_per(self, player):
+        try:
+            return self.get_per(player)
+        except TypeError:
+            return {'mp': None, 'per': None}
 
     @staticmethod
     def get_per(player):
-        time = player['mp'].split(':')
-        # if len(time) == 1 and time[0] == '':
-        #     return {'mp': None, 'per': None}
-
-        m, s = time[0], time[1] if len(time) > 1 else 0
-        time_value = round((int(m) * 60 + int(s)) / 60, 3)
-
-        # stats_list = ['ft', 'fta', 'fg', 'fga', 'fg3', 'stl', 'blk', 'orb', 'ast', 'drb', 'tov', 'pf']
-        # for stat in stats_list:
-        #     if player[stat] is None:
-        #         return {'mp': time_value, 'per': None}
+        if player['mp'] is None:
+            return {'mp': None, 'per': None}
+        time_value = player['mp'] / 60
 
         free_throw_miss = player['fta'] - player['ft']
         field_goal_miss = player['fga'] - player['fg']
@@ -133,7 +131,8 @@ class FeatureCollectorDB:
         return pd.DataFrame(data)
 
     def to_normalize_data(self, df):
-        df_data = df.loc[:, 'ELO_visitor':'t2p7_per']
+        df_data = df.loc[:, 'ELO_visitor':'visitor_b2b']
+        df_data.pop('visitor_b2b')
         df_info = df.loc[:, :'id_home']
         normalized = df.loc[:, 'visitor_b2b':'Y']
 
@@ -170,5 +169,5 @@ class FeatureCollectorDB:
 
     @staticmethod
     def save_data(normalized):
-        way = f'data/training_data/dataset_{date.today().day}_{date.today().month}_{date.today().year}.csv'
+        way = f'data/training_data/dataset_players_sorted_{date.today().day}_{date.today().month}_{date.today().year}.csv'
         normalized.to_csv(way, index=False, encoding='utf-8')

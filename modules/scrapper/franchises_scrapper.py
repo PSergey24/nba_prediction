@@ -24,19 +24,21 @@ class FranchisesScrapper:
         return BeautifulSoup(response.text, "html.parser")
 
     def parse_data(self, soup):
-        rows = self.parse_rows(soup)
-        return self.parse_franchises(rows)
+        rows_active = self.parse_rows(soup, 'teams_active')
+        rows_defunct = self.parse_rows(soup, 'teams_defunct')
+        rows_active.extend(rows_defunct)
+        return self.parse_franchises(rows_active)
 
     @staticmethod
-    def parse_rows(soup):
-        return soup.find('table', id='teams_active').find_all(attrs={"class": ["full_table", "partial_table"]})
+    def parse_rows(soup, id_table):
+        return soup.find('table', id=id_table).find_all(attrs={"class": ["full_table", "partial_table"]})
 
     def parse_franchises(self, rows):
         result = []
-        for soup in rows:
+        for i, soup in enumerate(rows):
             self.check_index(soup)
             next_soup = soup.find_next_sibling("tr")
-            if 'full_table' in soup.attrs['class'] and 'partial_table' in next_soup.attrs['class']:
+            if 'full_table' in soup.attrs['class'] and next_soup is not None and 'partial_table' in next_soup.attrs['class']:
                 continue
             result.append(self.parse_franchise(soup))
         return result

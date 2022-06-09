@@ -1,6 +1,6 @@
 from modules.models.logistic_regression import Trainer
 from modules.game_predictor import GamePredictor
-from modules.scrapper import Scrapper, ScheduleScrapper, RosterScrapper
+from modules.scrapper import Scrapper, ScheduleScrapper, RosterScrapper, FranchisesScrapper
 from modules.features_collector import FeatureCollectorDB
 
 
@@ -22,6 +22,9 @@ if __name__ == '__main__':
 
     scrapper = Scrapper()
     scrapper.main()
+
+    # scrapper_fr = FranchisesScrapper()
+    # scrapper_fr.main()
 
 
 

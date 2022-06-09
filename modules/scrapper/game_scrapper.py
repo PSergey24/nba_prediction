@@ -112,6 +112,11 @@ class GameScrapper:
             name = soup.find(attrs={"data-stat": "player"}).text
             link = soup.find(attrs={"data-stat": "player"}).find('a')['href']
             mp = soup.find(attrs={"data-stat": "mp"}).text
+            if mp != '':
+                time = mp.split(':')
+                m, s = time[0], time[1] if len(time) > 1 else 0
+                mp = str(int(m) * 60 + int(s))
+
             return Player(name, mp, fg, fga, fg3, fg3a, ft, fta, orb, drb, trb, ast, stl, blk, tov, pf, pts, link)
         return Team(fg, fga, fg3, fg3a, ft, fta, orb, drb, trb, ast, stl, blk, tov, pf, pts)
 

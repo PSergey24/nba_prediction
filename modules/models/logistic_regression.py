@@ -47,8 +47,11 @@ class Trainer:
 
     def main(self):
         data = self.get_train_data()
+        data = self.pop_columns(data)
         data = self.filter_nan_rows(data)
+        # data = self.filter_by_date(data)
         self.train(data)
+        # self.save_test_model()
         self.save_model()
 
     def get_train_data(self):
@@ -68,8 +71,19 @@ class Trainer:
         return files[0]['file']
 
     @staticmethod
+    def pop_columns(data):
+        columns = ['t1p8_per', 't1p9_per', 't1p10_per', 't2p8_per', 't2p9_per', 't2p10_per']
+        for column in columns:
+            data.pop(column)
+        return data
+
+    @staticmethod
     def filter_nan_rows(data):
         return data.dropna()
+
+    @staticmethod
+    def filter_by_date(data):
+        return data[data['season'] > 1999]
 
     def train(self, data):
         data, test_data = self.split_data(data, 0.99)
@@ -93,16 +107,59 @@ class Trainer:
 
                 # if step % 100 == 0:
                 #     print(f'epoch: {epoch}-{step}, loss: {loss.item():.4f}')
+            print(epoch)
 
         with torch.no_grad():
             info_test, x_test, y_test = self.df_to_tensor(validation_data)
 
             y_predicted = self.model(x_test)
             y_predicted_cls = y_predicted.round()
+            self.accuracy_by_threshold(y_predicted, y_test)
+
             acc = y_predicted_cls.eq(y_test).sum() / float(y_test.shape[0])
             self.accuracy = acc.item()
-
+            print(self.accuracy)
             # self.to_test(test_data)
+
+    @staticmethod
+    def accuracy_by_threshold(y_predicted, y_test):
+        acc_by_threshold = {'to_60': 0, 'to_70': 0, 'to_80': 0, 'to_90': 0, 'to_100': 0, 'all': 0}
+        total_by_threshold = {'to_60': 0, 'to_70': 0, 'to_80': 0, 'to_90': 0, 'to_100': 0, 'all': 0}
+        for i, item in enumerate(y_predicted):
+            if 0.60 > item.item() > 0.50 or 0.40 < item.item() < 0.50:
+                total_by_threshold['to_60'] += 1
+            if 0.70 > item.item() > 0.60 or 0.30 < item.item() < 0.40:
+                total_by_threshold['to_70'] += 1
+            if 0.80 > item.item() > 0.70 or 0.20 < item.item() < 0.30:
+                total_by_threshold['to_80'] += 1
+            if 0.90 > item.item() > 0.80 or 0.10 < item.item() < 0.20:
+                total_by_threshold['to_90'] += 1
+            if item.item() > 0.90 or item.item() < 0.10:
+                total_by_threshold['to_100'] += 1
+
+            if 0.60 > item.item() > 0.50 and y_test[i].item() == 1 or 0.40 < item.item() < 0.50 and y_test[
+                i].item() == 0:
+                acc_by_threshold['to_60'] += 1
+            if 0.70 > item.item() > 0.60 and y_test[i].item() == 1 or 0.30 < item.item() < 0.40 and y_test[
+                i].item() == 0:
+                acc_by_threshold['to_70'] += 1
+            if 0.80 > item.item() > 0.70 and y_test[i].item() == 1 or 0.20 < item.item() < 0.30 and y_test[
+                i].item() == 0:
+                acc_by_threshold['to_80'] += 1
+            if 0.90 > item.item() > 0.80 and y_test[i].item() == 1 or 0.10 < item.item() < 0.20 and y_test[
+                i].item() == 0:
+                acc_by_threshold['to_90'] += 1
+            if item.item() > 0.90 and y_test[i].item() == 1 or item.item() < 0.10 and y_test[i].item() == 0:
+                acc_by_threshold['to_100'] += 1
+            if item.item() > 0.50 and y_test[i].item() == 1 or item.item() < 0.50 and y_test[i].item() == 0:
+                acc_by_threshold['all'] += 1
+
+        print(f"to_60 = {acc_by_threshold['to_60'] / total_by_threshold['to_60']}; {total_by_threshold['to_60']}")
+        print(f"to_70 = {acc_by_threshold['to_70'] / total_by_threshold['to_70']}; {total_by_threshold['to_70']}")
+        print(f"to_80 = {acc_by_threshold['to_80'] / total_by_threshold['to_80']}; {total_by_threshold['to_80']}")
+        print(f"to_90 = {acc_by_threshold['to_90'] / total_by_threshold['to_90']}; {total_by_threshold['to_90']}")
+        print(f"to_100 = {acc_by_threshold['to_100'] / total_by_threshold['to_100']}; {total_by_threshold['to_100']}")
+        print(f"all = {acc_by_threshold['all'] / len(y_test)}")
 
     def split_data(self, data, percent):
         data = self.shuffle_data(data)
@@ -139,6 +196,10 @@ class Trainer:
             else:
                 print(
                     f'winner is {info_test[i][6]} (id_team) home_team; probability: {1 - item.detach().numpy()[0]}; result: {info_test[i][3]}-{info_test[i][4]}; link: {info_test[i][0]}')
+
+    def save_test_model(self):
+        self.way_to_model = f'data/models/test_model_lr_{date.today().day}_{date.today().month}_{date.today().year}/model.pth'
+        self.model.save(self.way_to_model)
 
     def save_model(self):
         models = self.db_worker.get_all('models')

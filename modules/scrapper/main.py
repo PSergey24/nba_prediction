@@ -8,7 +8,7 @@ from .data import Season, ParsingStatus
 class Scrapper:
 
     def __init__(self):
-        self.status = ParsingStatus(1965, 0)
+        self.status = ParsingStatus(1950, 0)
         self.season_scrapper = None
         self.seasons_list = None
         self.db_worker = DBWorker('data/db/nba.db')
@@ -17,7 +17,7 @@ class Scrapper:
         self.status.franchises = {}
 
     def main(self):
-        self.get_status(is_start=True)
+        self.get_status()
         self.get_seasons()
         self.process_seasons()
         self.db_worker.conn.close()
@@ -49,7 +49,7 @@ class Scrapper:
         self.reset_season()
 
     def reset_elo(self):
-        for id_team in range(1, 31):
+        for id_team in range(1, 54):
             sql = 'REPLACE INTO ELO (id_team, ELO) VALUES ({}, 1500)'.format(id_team)
             self.db_worker.conn.execute(sql)
             self.db_worker.conn.commit()
@@ -83,7 +83,7 @@ class Scrapper:
     def process_seasons(self) -> None:
         for season in self.seasons_list:
             self.process_season(season)
-            self.update_status()
+            # self.update_status()
 
     def process_season(self, link: str) -> None:
         season = Season(link)
@@ -92,8 +92,8 @@ class Scrapper:
 
     def update_status(self):
         self.update_elo_after_season()
-        self.update_season_game()
         self.copy_db()
+        self.update_season_game()
 
     def update_elo_after_season(self) -> None:
         self.update_status_elo()

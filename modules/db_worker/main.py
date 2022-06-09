@@ -11,6 +11,7 @@ class DBWorker:
         return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
     def get_all(self, table_name):
+        self.conn.row_factory = self.dict_factory
         sql = 'SELECT * FROM {}'.format(table_name)
         rows = self.conn.execute(sql).fetchall()
         return rows
@@ -94,6 +95,11 @@ class DBWorker:
         self.conn.commit()
 
     # --- modules/features_collector ---
+    def replace_mp_players(self, mp, id):
+        sql = "UPDATE games_players SET mp={} WHERE id={}".format(mp, id)
+        self.conn.execute(sql)
+        self.conn.commit()
+
     def get_all_games(self):
         self.conn.row_factory = self.dict_factory
         sql = """SELECT g.id, g.link, g.date, g.season, g.pts_visitor, g.pts_home,  
@@ -111,6 +117,7 @@ class DBWorker:
                         FROM games_teams
                     ) as home
                 WHERE visitor.id_game=g.id AND visitor.id_team=g.id_visitor
+                AND g.season > 1990
                 AND home.id_game=g.id AND home.id_team=g.id_home
                 ORDER by g.id
                 """
@@ -135,7 +142,8 @@ class DBWorker:
                 SELECT g.date, sub.id_player, sub.mp, sub.fg, sub.fga, sub.fg3, sub.fg3a, sub.ft, sub.fta, sub.orb, 
                 sub.drb, sub.ast, sub.stl, sub.blk, sub.tov, sub.pf
                 FROM games g, (
-                                SELECT gp.id_player, gp.id_game, gp.mp,
+                                SELECT gp.id_player, gp.id_game,
+                                    AVG(gp.mp) OVER (Partition BY gp.id_player ROWS BETWEEN 10 PRECEDING and 1 PRECEDING) AS 'mp',
                                     AVG(gp.fg) OVER (Partition BY gp.id_player ROWS BETWEEN 10 PRECEDING and 1 PRECEDING) AS 'fg',
                                     AVG(gp.fga) OVER (Partition BY gp.id_player ROWS BETWEEN 10 PRECEDING and 1 PRECEDING) AS 'fga',
                                     AVG(gp.fg3) OVER (Partition BY gp.id_player ROWS BETWEEN 10 PRECEDING and 1 PRECEDING) AS 'fg3',
